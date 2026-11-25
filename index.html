@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NutriTernak ID — Sistem Formulasi Pakan Ternak Indonesia</title>
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="description" content="Aplikasi Formulasi Pakan untuk Semua Ternak Indonesia lengkap dengan Database Bahan Pakan, Nutrisi, Standar Ternak, dan Kalkulator Biaya Ransum.">
+
+  <!-- PWA Manifest via Data URI (Single-File PWA) -->
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22NutriTernak%20ID%20-%20Formulasi%20Pakan%20Ternak%22%2C%22short_name%22%3A%22NutriTernak%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%231d4ed8%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520100%2520100'%253E%253Crect%2520width%3D'100'%2520height%3D'100'%2520rx%3D'24'%2520fill%3D'%25231d4ed8'%2F%253E%253Ctext%2520x%3D'50%25'%2520y%3D'56%25'%2520font-size%3D'50'%2520text-anchor%3D'middle'%2520dominant-baseline%3D'middle'%2520fill%3D'white'%2520font-family%3D'sans-serif'%2520font-weight%3D'bold'%253EN%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+  <!-- Fonts & Tailwind CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Full-Page Overlay agar menutup elemen bawaan Blogger secara sempurna */
+    #nutriternak-root {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Glassmorphism Utilities */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+    }
+
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(203, 213, 225, 0.75);
+      box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.14);
+    }
+
+    /* Pre-Login Hero: Double-Layer Blue Accent Outline & Continuous Moving Border Light */
+    .hero-frame-outer {
+      position: relative;
+      border-radius: 1.75rem;
+      padding: 10px;
+      border: 2px solid rgba(37, 99, 235, 0.25);
+      background: linear-gradient(135deg, rgba(239, 246, 255, 0.7), rgba(255, 255, 255, 0.9));
+      box-shadow: 0 24px 60px -15px rgba(30, 64, 175, 0.16);
+      transform-style: preserve-3d;
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .hero-frame-inner {
+      position: relative;
+      border-radius: 1.35rem;
+      padding: 2.5px;
+      overflow: hidden;
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    /* Continuous Moving Border Light */
+    .hero-frame-inner::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        transparent 220deg,
+        rgba(59, 130, 246, 0.25) 260deg,
+        #2563eb 310deg,
+        #38bdf8 340deg,
+        transparent 360deg
+      );
+      animation: rotateBorderLight 5.5s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotateBorderLight {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hero-dashboard-surface {
+      position: relative;
+      z-index: 1;
+      border-radius: 1.2rem;
+      background: #ffffff;
+    }
+
+    /* Cursor Spotlight */
+    #hero-spotlight {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      background: radial-gradient(520px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(37, 99, 235, 0.11), transparent 65%);
+    }
+
+    /* Floating Parallax Cards */
+    .parallax-layer {
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    /* Responsive Navigation Rules (Media Queries Wajib) */
+    .desktop-sidebar {
+      display: flex;
+    }
+    .mobile-bottom-nav {
+      display: none;
+    }
+    .app-main-area {
+      margin-left: 16.5rem;
+      padding-bottom: 2.5rem;
+    }
+
+    @media (max-width: 767px) {
+      .desktop-sidebar {
+        display: none !important;
+      }
+      .mobile-bottom-nav {
+        display: flex !important;
+      }
+      .app-main-area {
+        margin-left: 0 !important;
+        padding-bottom: 6.5rem !important;
+      }
+    }
+
+    /* Respect Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .hero-frame-inner::before {
+        animation: none !important;
+      }
+      .hero-frame-outer,
+      .parallax-layer {
+        transition: none !important;
+        transform: none !important;
+      }
+      #hero-spotlight {
+        display: none !important;
+      }
+    }
+
+    /* Custom Scrollbar */
+    #nutriternak-root::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    #nutriternak-root::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+
+    /* Print Styling untuk Lembar Formulasi Ransum */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #print-area, #print-area * {
+        visibility: visible !important;
+      }
+      #print-area {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: #ffffff !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="m-0 p-0 bg-slate-50">
+  <div id="nutriternak-root">
+
+    <!-- ==================== PRE-LOGIN / LANDING VIEW ==================== -->
+    <section id="prelogin-view" class="relative min-h-screen bg-white flex flex-col justify-between overflow-hidden">
+      <!-- Cursor Spotlight Layer -->
+      <div id="hero-spotlight"></div>
+
+      <!-- Subtle Grid Pattern -->
+      <div class="pointer-events-none absolute inset-0 opacity-[0.035]" style="background-image: radial-gradient(#1d4ed8 1px, transparent 1px); background-size: 28px 28px;"></div>
+
+      <!-- Top Header Pre-Login -->
+      <header class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-700 text-white flex items-center justify-center shadow-md shadow-brand-700/25">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18c-3.5 2-6 5.5-6 9.5S8.5 20 12 21m0-18c3.5 2 6 5.5 6 9.5S15.5 20 12 21M6 12h12"/>
+            </svg>
+          </div>
+          <div>
+            <span class="text-lg font-extrabold tracking-tight text-slate-900">NutriTernak<span class="text-brand-600">ID</span></span>
+            <p class="text-[11px] font-medium text-slate-500 leading-none">Formulasi Pakan Ternak Indonesia</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div id="prelogin-preview-badge" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            Mode Preview
+          </div>
+          <button type="button" onclick="window.openLoginModal('user')" class="px-4 py-2 rounded-xl text-sm font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition">
+            Masuk User
+          </button>
+          <button type="button" onclick="window.openLoginModal('admin')" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 shadow-sm shadow-brand-700/20 transition">
+            Login Admin
+          </button>
+        </div>
+      </header>
+
+      <!-- Split Hero Layout -->
+      <main id="hero-area" class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-14 flex-1 flex items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full">
+
+          <!-- Left Column: Copywriting & Login CTAs -->
+          <div class="lg:col-span-6 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-semibold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Standar Nutrisi Unggas, Ruminansia &amp; Non-Ruminansia
+            </div>
+
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+              Formulasi Pakan Presisi dengan <span class="text-brand-600">Bahan Lokal Indonesia</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
+              Susun ransum optimal untuk ayam, sapi, kambing, itik, hingga ikan. Lengkap dengan profil nutrisi (BK, PK, EM, TDN, SK, LK, Ca, P), batas pemakaian aman, serta estimasi biaya per kilogram yang dapat diperbarui kapan saja.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+              <button type="button" onclick="window.openLoginModal('user')" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold shadow-lg shadow-brand-700/25 transition">
+                <span>Masuk sebagai Peternak / User</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              </button>
+              <button type="button" onclick="window.openLoginModal('admin')" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-semibold border border-slate-200 shadow-sm transition">
+                <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Portal Admin</span>
+              </button>
+            </div>
+
+            <!-- Key Highlights -->
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+              <div>
+                <p class="text-xl font-extrabold text-slate-900">8 Parameter</p>
+                <p class="text-xs text-slate-500">BK, PK, EM, TDN, SK, LK, Ca, P</p>
+              </div>
+              <div>
+                <p class="text-xl font-extrabold text-slate-900">Real-Time</p>
+                <p class="text-xs text-slate-500">Update Harga &amp; Nutrisi</p>
+              </div>
+              <div>
+                <p class="text-xl font-extrabold text-slate-900">Multi-Ternak</p>
+                <p class="text-xs text-slate-500">Unggas, Ruminansia, dll.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Large Tilted Rounded Dashboard Card + Double-Layer Blue Outline + Floating Cards -->
+          <div class="lg:col-span-6 relative flex items-center justify-center py-6">
+            <!-- Floating Info Card Top-Left (Parallax) -->
+            <div data-parallax="18" class="parallax-layer hidden sm:flex items-center gap-3 absolute -top-2 -left-2 z-20 px-4 py-3 rounded-2xl glass-panel shadow-xl">
+              <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-900">Protein Kasar Ideal</p>
+                <p class="text-[11px] text-emerald-700 font-medium">21.4% (Target 20–22%)</p>
+              </div>
+            </div>
+
+            <!-- Main Tilted Card with Double-Layer Blue Outline & Moving Border Light -->
+            <div id="hero-tilt-card" class="hero-frame-outer w-full max-w-lg" style="transform: perspective(1000px) rotateY(-5deg) rotateX(3deg);">
+              <div class="hero-frame-inner">
+                <div class="hero-dashboard-surface p-5 sm:p-6">
+                  <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <div>
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-brand-600">Simulasi Ransum</span>
+                      <h3 class="text-base font-bold text-slate-900">Ayam Broiler — Fase Starter</h3>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">100 kg Batch</span>
+                  </div>
+
+                  <!-- Mock Preview Bars -->
+                  <div class="space-y-3.5 py-4">
+                    <div>
+                      <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-700">Jagung Kuning Giling</span>
+                        <span class="text-slate-900">55% • Rp 5.800/kg</span>
+                      </div>
+                      <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-full bg-brand-600 rounded-full" style="width: 55%"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-700">Bungkil Kedelai (SBM)</span>
+                        <span class="text-slate-900">32% • Rp 9.500/kg</span>
+                      </div>
+                      <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-full bg-sky-500 rounded-full" style="width: 32%"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-700">Dedak Padi &amp; Mineral Premix</span>
+                        <span class="text-slate-900">13% • Teroptimasi</span>
+                      </div>
+                      <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-full bg-indigo-500 rounded-full" style="width: 13%"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Preview Metrics Footer -->
+                  <div class="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-100">
+                    <div class="p-2.5 rounded-xl bg-slate-50">
+                      <p class="text-[10px] font-semibold text-slate-500 uppercase">Energi (EM)</p>
+                      <p class="text-sm font-extrabold text-slate-900">3.020 kkal</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-50">
+                      <p class="text-[10px] font-semibold text-slate-500 uppercase">Serat Kasar</p>
+                      <p class="text-sm font-extrabold text-slate-900">4.2 %</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-brand-50">
+                      <p class="text-[10px] font-semibold text-brand-700 uppercase">Estimasi Biaya</p>
+                      <p class="text-sm font-extrabold text-brand-800">Rp 6.950/kg</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Floating Info Card Bottom-Right (Parallax) -->
+            <div data-parallax="-22" class="parallax-layer hidden sm:flex items-center gap-3 absolute -bottom-3 -right-2 z-20 px-4 py-3 rounded-2xl glass-panel shadow-xl">
+              <div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-900">Kontrol Biaya Pakan</p>
+                <p class="text-[11px] text-slate-500">Hitung per kg &amp; per batch</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- Footer Pre-Login -->
+      <footer class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <span>&copy; 2026 NutriTernak ID. Platform Formulasi Pakan Ternak Indonesia.</span>
+        <span>PWA Ready • Terhubung Real-Time dengan Cloud Database</span>
+      </footer>
+    </section>
+
+    <!-- ==================== LOGIN MODAL (HYBRID AUTH) ==================== -->
+    <div id="login-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative">
+        <button type="button" onclick="window.closeLoginModal()" class="absolute top-4 right-4 p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition" aria-label="Tutup">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="mb-5">
+          <h2 class="text-xl font-extrabold text-slate-900">Masuk ke NutriTernak ID</h2>
+          <p class="text-xs text-slate-500 mt-1">Pilih peran akses Anda untuk melanjutkan.</p>
+        </div>
+
+        <!-- Role Switcher Tabs -->
+        <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 mb-5">
+          <button type="button" id="tab-login-user" onclick="window.switchLoginRole('user')" class="py-2 rounded-lg text-xs font-bold transition">
+            User / Peternak
+          </button>
+          <button type="button" id="tab-login-admin" onclick="window.switchLoginRole('admin')" class="py-2 rounded-lg text-xs font-bold transition">
+            Administrator
+          </button>
+        </div>
+
+        <!-- Preview Demo Credentials Box (HANYA MUNCUL JIKA IS_PREVIEW === true) -->
+        <div id="login-preview-hint" class="hidden mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+          <p class="font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span> Mode Preview (Uji Coba Lokal)
+          </p>
+          <p id="login-preview-hint-text"></p>
+        </div>
+
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label id="login-identifier-label" class="block text-xs font-semibold text-slate-700 mb-1.5">Username / ID Peternak</label>
+            <input id="login-identifier" type="text" required autocomplete="username" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="Masukkan username">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
+            <input id="login-password" type="password" required autocomplete="current-password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" placeholder="••••••••">
+          </div>
+
+          <div id="login-error-box" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium"></div>
+
+          <button type="submit" id="login-submit-btn" class="w-full py-3 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-bold shadow-md shadow-brand-700/20 transition flex items-center justify-center gap-2">
+            <span>Masuk Sekarang</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== MAIN APPLICATION SHELL ==================== -->
+    <div id="app-shell" class="hidden min-h-screen bg-slate-50">
+
+      <!-- DESKTOP FIXED SIDEBAR -->
+      <aside class="desktop-sidebar fixed top-0 left-0 bottom-0 w-[16.5rem] bg-white border-r border-slate-200 flex-col justify-between z-30">
+        <div class="p-5">
+          <!-- Brand -->
+          <div class="flex items-center gap-2.5 pb-5 border-b border-slate-100">
+            <div class="w-9 h-9 rounded-xl bg-brand-700 text-white flex items-center justify-center shadow-sm">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18c-3.5 2-6 5.5-6 9.5S8.5 20 12 21m0-18c3.5 2 6 5.5 6 9.5S15.5 20 12 21M6 12h12"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-base font-extrabold text-slate-900 leading-tight">NutriTernak<span class="text-brand-600">ID</span></h1>
+              <p class="text-[11px] text-slate-500" id="sidebar-role-label">Panel Formulasi</p>
+            </div>
+          </div>
+
+          <!-- Preview Mode Indicator inside App (ONLY IS_PREVIEW === true) -->
+          <div id="app-preview-banner" class="hidden mt-4 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-800 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+            <span>Mode Preview (In-Memory)</span>
+          </div>
+
+          <!-- Sidebar Menu -->
+          <nav id="desktop-nav-list" class="mt-5 space-y-1"></nav>
+        </div>
+
+        <!-- User Profile & Logout -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/70">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-bold text-sm flex items-center justify-center" id="sidebar-avatar">U</div>
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-slate-900 truncate" id="sidebar-user-name">Pengguna</p>
+              <p class="text-[11px] text-slate-500 truncate" id="sidebar-user-sub">Peternak</p>
+            </div>
+          </div>
+          <button type="button" onclick="window.handleLogout()" class="w-full py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-semibold text-slate-700 transition flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Keluar Aplikasi
+          </button>
+        </div>
+      </aside>
+
+      <!-- MOBILE TOP BAR -->
+      <header class="md:hidden sticky top-0 z-20 glass-panel border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-700 text-white flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18c-3.5 2-6 5.5-6 9.5S8.5 20 12 21m0-18c3.5 2 6 5.5 6 9.5S15.5 20 12 21M6 12h12"/></svg>
+          </div>
+          <div>
+            <span class="text-sm font-extrabold text-slate-900">NutriTernak<span class="text-brand-600">ID</span></span>
+            <span id="mobile-preview-pill" class="hidden ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">PREVIEW</span>
+          </div>
+        </div>
+        <button type="button" onclick="window.handleLogout()" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition">
+          Keluar
+        </button>
+      </header>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="app-main-area min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div id="page-content"></div>
+        </div>
+      </main>
+
+      <!-- MOBILE FLOATING BOTTOM NAVIGATION BAR -->
+      <nav id="mobile-nav-list" class="mobile-bottom-nav fixed bottom-3 left-3 right-3 z-30 glass-nav rounded-2xl px-2 py-2 items-center justify-around"></nav>
+    </div>
+
+    <!-- ==================== REUSABLE MODAL CONTAINER ==================== -->
+    <div id="crud-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 id="crud-modal-title" class="text-base font-extrabold text-slate-900">Form Data</h3>
+          <button type="button" onclick="window.closeCrudModal()" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="crud-modal-body" class="p-6 overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <!-- ==================== CUSTOM CONFIRM MODAL (NO alert/confirm) ==================== -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200">
+        <h3 id="confirm-title" class="text-base font-extrabold text-slate-900">Konfirmasi</h3>
+        <p id="confirm-message" class="text-sm text-slate-600 mt-2">Apakah Anda yakin?</p>
+        <div class="flex justify-end gap-2.5 mt-6">
+          <button type="button" id="confirm-cancel-btn" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
+          <button type="button" id="confirm-ok-btn" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm">Ya, Lanjutkan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TOAST NOTIFICATION ==================== -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[70] flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+  </div>
+
+  <!-- ==================== MAIN APPLICATION MODULE ==================== -->
+  <script type="module">
+    // KONFIGURASI APLIKASI
+    const IS_PREVIEW = false; // Saat melakukan Deploy / Publish, ubah nilainya menjadi false agar aplikasi menggunakan database Firebase secara langsung tanpa data dummy
+
+    // Tempelkan konfigurasi Firebase Kalian di sini
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcSHymOnvubHB1GkAaggtuiwLSrgw7GwM",
+  authDomain: "formulasi-pakan-mr-sanda.firebaseapp.com",
+  projectId: "formulasi-pakan-mr-sanda",
+  storageBucket: "formulasi-pakan-mr-sanda.firebasestorage.app",
+  messagingSenderId: "267770967555",
+  appId: "1:267770967555:web:2a75c6d4c5dfb942128036"
+    };
+
+    // ==================== IMPORTS FIREBASE SDK v11 ====================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      getDocs,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      onSnapshot,
+      query,
+      where
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // ==================== SERVICE WORKER DINAMIS (PWA 1 FILE) ====================
+    function registerDynamicServiceWorker() {
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        try {
+          const swCode = `
+            const CACHE_NAME = 'nutriternak-id-v1';
+            self.addEventListener('install', (e) => { self.skipWaiting(); });
+            self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
+            self.addEventListener('fetch', (e) => {
+              if (e.request.method !== 'GET') return;
+              e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+            });
+          `;
+          const blob = new Blob([swCode], { type: 'application/javascript' });
+          const swUrl = URL.createObjectURL(blob);
+          navigator.serviceWorker.register(swUrl).catch(() => {});
+        } catch (err) {
+          // Abaikan pada environment iframe/sandbox
+        }
+      }
+    }
+
+    // ==================== STATE GLOBAL APLIKASI ====================
+    let app = null;
+    let auth = null;
+    let db = null;
+    let unsubscribers = [];
+
+    const state = {
+      currentUser: null, // { uid, role: 'admin'|'user', nama_lengkap, nama_peternakan, username/email }
+      activeTab: 'dashboard',
+      loginRole: 'user',
+      feed_ingredients: [],
+      livestock_standards: [],
+      formulations: [],
+      users: [],
+      // Filter UI state
+      ingredientSearch: '',
+      ingredientCategory: 'Semua',
+      standardGroup: 'Semua',
+      // Calculator working state
+      calc: {
+        nama_formulasi: '',
+        standard_id: '',
+        total_berat_kg: 100,
+        items: [] // { ingredient_id, persentase }
+      }
+    };
+
+    // ==================== DATA DUMMY KHUSUS MODE PREVIEW (MAKS 1-2 PER KOLEKSI) ====================
+    function loadPreviewDummyData() {
+      if (!IS_PREVIEW) return;
+      state.feed_ingredients = [
+        {
+          id: 'ing-1',
+          nama_bahan: 'Jagung Kuning Giling',
+          kategori: 'Sumber Energi',
+          harga_per_kg: 5800,
+          bk: 88.0,
+          pk: 8.6,
+          em: 3350,
+          tdn: 82.0,
+          sk: 2.5,
+          lk: 3.9,
+          ca: 0.02,
+          p: 0.28,
+          batas_maksimal: 65,
+          keterangan: 'Bahan pakan sumber energi utama ternak unggas & ruminansia di Indonesia.',
+          updated_at: '2026-11-20'
+        },
+        {
+          id: 'ing-2',
+          nama_bahan: 'Bungkil Kedelai (SBM)',
+          kategori: 'Sumber Protein Nabati',
+          harga_per_kg: 9600,
+          bk: 89.0,
+          pk: 44.5,
+          em: 2240,
+          tdn: 80.0,
+          sk: 6.2,
+          lk: 1.5,
+          ca: 0.29,
+          p: 0.65,
+          batas_maksimal: 35,
+          keterangan: 'Sumber protein nabati berkualitas tinggi dengan profil asam amino seimbang.',
+          updated_at: '2026-11-22'
+        }
+      ];
+
+      state.livestock_standards = [
+        {
+          id: 'std-1',
+          jenis_ternak: 'Ayam Broiler',
+          kelompok: 'Unggas',
+          fase: 'Starter (0–21 Hari)',
+          target_pk_min: 20.0,
+          target_pk_max: 23.0,
+          target_em_min: 2950,
+          target_tdn_min: 0,
+          target_sk_max: 5.0,
+          target_ca_min: 0.90,
+          target_p_min: 0.45,
+          updated_at: '2026-11-18'
+        },
+        {
+          id: 'std-2',
+          jenis_ternak: 'Sapi Potong',
+          kelompok: 'Ruminansia',
+          fase: 'Penggemukan (Fattening)',
+          target_pk_min: 12.0,
+          target_pk_max: 15.0,
+          target_em_min: 0,
+          target_tdn_min: 68.0,
+          target_sk_max: 22.0,
+          target_ca_min: 0.45,
+          target_p_min: 0.30,
+          updated_at: '2026-11-19'
+        }
+      ];
+
+      state.formulations = [
+        {
+          id: 'form-1',
+          nama_formulasi: 'Ransum Broiler Starter Dasar',
+          owner_id: 'usr-1',
+          owner_role: 'user',
+          standard_id: 'std-1',
+          jenis_ternak_label: 'Ayam Broiler — Starter (0–21 Hari)',
+          total_berat_kg: 100,
+          komposisi: [
+            { ingredient_id: 'ing-1', nama_bahan: 'Jagung Kuning Giling', persentase: 65, berat_kg: 65, harga_per_kg: 5800 },
+            { ingredient_id: 'ing-2', nama_bahan: 'Bungkil Kedelai (SBM)', persentase: 35, berat_kg: 35, harga_per_kg: 9600 }
+          ],
+          hasil_nutrisi: { bk: 88.35, pk: 21.17, em: 2961.5, tdn: 81.3, sk: 3.8, lk: 3.06, ca: 0.11, p: 0.41 },
+          biaya_per_kg: 7130,
+          total_biaya: 713000,
+          created_at: '2026-11-23'
+        }
+      ];
+
+      state.users = [
+        {
+          id: 'usr-1',
+          username: 'peternak01',
+          password: '123456',
+          nama_lengkap: 'Budi Santoso',
+          nama_peternakan: 'Berkah Jaya Farm',
+          status: 'aktif',
+          created_at: '2026-11-15'
+        }
+      ];
+    }
+
+    // ==================== INISIALISASI FIREBASE (HANYA SAAT IS_PREVIEW === false) ====================
+    function initFirebaseProduction() {
+      if (IS_PREVIEW) return;
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        onAuthStateChanged(auth, (firebaseUser) => {
+          if (firebaseUser) {
+            state.currentUser = {
+              uid: firebaseUser.uid,
+              role: 'admin',
+              email: firebaseUser.email,
+              nama_lengkap: 'Administrator',
+              nama_peternakan: 'Pusat NutriTernak ID'
+            };
+            enterAppShell();
+            subscribeFirestoreData();
+          }
+        });
+      } catch (err) {
+        showToast('Gagal menginisialisasi Firebase. Periksa firebaseConfig Anda.', 'error');
+      }
+    }
+
+    function clearFirestoreListeners() {
+      unsubscribers.forEach((unsub) => {
+        try { unsub(); } catch (_) {}
+      });
+      unsubscribers = [];
+    }
+
+    function subscribeFirestoreData() {
+      if (IS_PREVIEW || !db) return;
+      clearFirestoreListeners();
+
+      const onErr = (colName) => (err) => {
+        showToast(`Gagal memuat ${colName}: ${err.message}`, 'error');
+      };
+
+      unsubscribers.push(
+        onSnapshot(collection(db, 'feed_ingredients'), (snap) => {
+          state.feed_ingredients = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderActivePage();
+        }, onErr('bahan pakan'))
+      );
+
+      unsubscribers.push(
+        onSnapshot(collection(db, 'livestock_standards'), (snap) => {
+          state.livestock_standards = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderActivePage();
+        }, onErr('standar ternak'))
+      );
+
+      unsubscribers.push(
+        onSnapshot(collection(db, 'formulations'), (snap) => {
+          state.formulations = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderActivePage();
+        }, onErr('riwayat formulasi'))
+      );
+
+      if (state.currentUser?.role === 'admin') {
+        unsubscribers.push(
+          onSnapshot(collection(db, 'users'), (snap) => {
+            state.users = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            renderActivePage();
+          }, onErr('pengguna'))
+        );
+      }
+    }
+
+    // ==================== UTILITIES & FORMATTER ====================
+    const fmtRp = (val) => 'Rp ' + Math.round(Number(val) || 0).toLocaleString('id-ID');
+    const fmtNum = (val, dec = 2) => (Number(val) || 0).toFixed(dec);
+    const todayStr = () => new Date().toISOString().split('T')[0];
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-brand-700 text-white',
+        warning: 'bg-amber-500 text-white'
+      };
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center justify-between gap-3 transition-all duration-300 ${colors[type] || colors.info}`;
+      el.innerHTML = `<span>${escapeHtml(message)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-8px)';
+        setTimeout(() => el.remove(), 300);
+      }, 3200);
+    }
+
+    function customConfirm(title, message) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-message').textContent = message;
+        modal.classList.remove('hidden');
+
+        const okBtn = document.getElementById('confirm-ok-btn');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+        const cleanup = (result) => {
+          modal.classList.add('hidden');
+          okBtn.onclick = null;
+          cancelBtn.onclick = null;
+          resolve(result);
+        };
+
+        okBtn.onclick = () => cleanup(true);
+        cancelBtn.onclick = () => cleanup(false);
+      });
+    }
+
+    // ==================== PRE-LOGIN HERO INTERACTIONS ====================
+    function setupHeroInteractions() {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+      if (prefersReduced || !isFinePointer) return;
+
+      const preloginEl = document.getElementById('prelogin-view');
+      const spotlight = document.getElementById('hero-spotlight');
+      const tiltCard = document.getElementById('hero-tilt-card');
+      const parallaxEls = document.querySelectorAll('.parallax-layer');
+
+      preloginEl.addEventListener('mousemove', (e) => {
+        const rect = preloginEl.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Cursor Spotlight
+        spotlight.style.opacity = '1';
+        spotlight.style.setProperty('--spot-x', `${x}px`);
+        spotlight.style.setProperty('--spot-y', `${y}px`);
+
+        // Normalized coordinates (-0.5 to 0.5)
+        const nx = (x / rect.width) - 0.5;
+        const ny = (y / rect.height) - 0.5;
+
+        // 3D Mouse Tilt on main hero card
+        if (tiltCard) {
+          const rotY = (-5 + nx * 14).toFixed(2);
+          const rotX = (3 - ny * 12).toFixed(2);
+          tiltCard.style.transform = `perspective(1000px) rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+        }
+
+        // Parallax on floating cards
+        parallaxEls.forEach((el) => {
+          const depth = Number(el.dataset.parallax || 15);
+          el.style.transform = `translate3d(${(nx * depth).toFixed(1)}px, ${(ny * depth).toFixed(1)}px, 0)`;
+        });
+      });
+
+      preloginEl.addEventListener('mouseleave', () => {
+        spotlight.style.opacity = '0';
+        if (tiltCard) {
+          tiltCard.style.transform = 'perspective(1000px) rotateY(-5deg) rotateX(3deg)';
+        }
+        parallaxEls.forEach((el) => {
+          el.style.transform = 'translate3d(0, 0, 0)';
+        });
+      });
+    }
+
+    // ==================== HYBRID AUTHENTICATION ====================
+    window.openLoginModal = function(role = 'user') {
+      document.getElementById('login-modal').classList.remove('hidden');
+      document.getElementById('login-error-box').classList.add('hidden');
+      document.getElementById('login-form').reset();
+      window.switchLoginRole(role);
+    };
+
+    window.closeLoginModal = function() {
+      document.getElementById('login-modal').classList.add('hidden');
+    };
+
+    window.switchLoginRole = function(role) {
+      state.loginRole = role;
+      const tabUser = document.getElementById('tab-login-user');
+      const tabAdmin = document.getElementById('tab-login-admin');
+      const idLabel = document.getElementById('login-identifier-label');
+      const idInput = document.getElementById('login-identifier');
+      const hintBox = document.getElementById('login-preview-hint');
+      const hintText = document.getElementById('login-preview-hint-text');
+
+      if (role === 'admin') {
+        tabAdmin.className = 'py-2 rounded-lg text-xs font-bold bg-white text-brand-700 shadow-sm transition';
+        tabUser.className = 'py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition';
+        idLabel.textContent = 'Email Administrator';
+        idInput.type = 'email';
+        idInput.placeholder = 'admin@nutriternak.id';
+      } else {
+        tabUser.className = 'py-2 rounded-lg text-xs font-bold bg-white text-brand-700 shadow-sm transition';
+        tabAdmin.className = 'py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition';
+        idLabel.textContent = 'Username / ID Peternak';
+        idInput.type = 'text';
+        idInput.placeholder = 'Masukkan username terdaftar';
+      }
+
+      if (IS_PREVIEW) {
+        hintBox.classList.remove('hidden');
+        hintText.innerHTML = role === 'admin'
+          ? 'Admin Demo: <b>admin@nutriternak.id</b> / Password: <b>admin123</b>'
+          : 'User Demo: <b>peternak01</b> / Password: <b>123456</b>';
+      } else {
+        hintBox.classList.add('hidden');
+      }
+    };
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const identifier = document.getElementById('login-identifier').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errBox = document.getElementById('login-error-box');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      errBox.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Memverifikasi...</span>';
+
+      try {
+        if (IS_PREVIEW) {
+          // MODE PREVIEW: Validasi murni in-memory
+          if (state.loginRole === 'admin') {
+            if (identifier === 'admin@nutriternak.id' && password === 'admin123') {
+              state.currentUser = {
+                uid: 'admin-preview',
+                role: 'admin',
+                email: identifier,
+                nama_lengkap: 'Administrator',
+                nama_peternakan: 'Pusat NutriTernak ID'
+              };
+              window.closeLoginModal();
+              enterAppShell();
+              showToast('Berhasil masuk sebagai Admin (Mode Preview)', 'success');
+            } else {
+              throw new Error('Email atau password Admin demo tidak sesuai.');
+            }
+          } else {
+            const found = state.users.find((u) => u.username === identifier && u.password === password);
+            if (!found) throw new Error('Username atau password tidak ditemukan.');
+            if (found.status !== 'aktif') throw new Error('Akun Anda sedang dinonaktifkan oleh Admin.');
+            state.currentUser = {
+              uid: found.id,
+              role: 'user',
+              username: found.username,
+              nama_lengkap: found.nama_lengkap,
+              nama_peternakan: found.nama_peternakan
+            };
+            window.closeLoginModal();
+            enterAppShell();
+            showToast(`Selamat datang, ${found.nama_lengkap}`, 'success');
+          }
+        } else {
+          // MODE PRODUKSI: 100% Firebase Auth (Admin) & Firestore (User)
+          if (!auth || !db) throw new Error('Konfigurasi Firebase belum valid.');
+
+          if (state.loginRole === 'admin') {
+            const cred = await signInWithEmailAndPassword(auth, identifier, password);
+            state.currentUser = {
+              uid: cred.user.uid,
+              role: 'admin',
+              email: cred.user.email,
+              nama_lengkap: 'Administrator',
+              nama_peternakan: 'Pusat NutriTernak ID'
+            };
+            window.closeLoginModal();
+            enterAppShell();
+            subscribeFirestoreData();
+            showToast('Login Admin berhasil.', 'success');
+          } else {
+            const q = query(collection(db, 'users'), where('username', '==', identifier));
+            const snap = await getDocs(q);
+            if (snap.empty) {
+              throw new Error('Username tidak terdaftar di sistem.');
+            }
+            const userDoc = snap.docs[0];
+            const userData = userDoc.data();
+            if (userData.password !== password) {
+              throw new Error('Password yang Anda masukkan salah.');
+            }
+            if (userData.status !== 'aktif') {
+              throw new Error('Akun Anda berstatus nonaktif. Hubungi Admin.');
+            }
+            state.currentUser = {
+              uid: userDoc.id,
+              role: 'user',
+              username: userData.username,
+              nama_lengkap: userData.nama_lengkap,
+              nama_peternakan: userData.nama_peternakan || '-'
+            };
+            window.closeLoginModal();
+            enterAppShell();
+            subscribeFirestoreData();
+            showToast(`Selamat datang, ${userData.nama_lengkap}`, 'success');
+          }
+        }
+      } catch (err) {
+        errBox.textContent = err.message || 'Gagal melakukan autentikasi.';
+        errBox.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Masuk Sekarang</span>';
+      }
+    });
+
+    window.handleLogout = async function() {
+      const ok = await customConfirm('Keluar dari Aplikasi', 'Apakah Anda ingin mengakhiri sesi saat ini?');
+      if (!ok) return;
+
+      if (!IS_PREVIEW && auth && state.currentUser?.role === 'admin') {
+        try { await signOut(auth); } catch (_) {}
+      }
+      clearFirestoreListeners();
+      state.currentUser = null;
+      state.activeTab = 'dashboard';
+      if (!IS_PREVIEW) {
+        state.feed_ingredients = [];
+        state.livestock_standards = [];
+        state.formulations = [];
+        state.users = [];
+      }
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('prelogin-view').classList.remove('hidden');
+      showToast('Anda telah keluar dari aplikasi.', 'info');
+    };
+
+    // ==================== SHELL & NAVIGATION ====================
+    const MENU_ITEMS = [
+      { id: 'dashboard', label: 'Dashboard', short: 'Home', roles: ['admin', 'user'], icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>' },
+      { id: 'calculator', label: 'Kalkulator Pakan', short: 'Ransum', roles: ['admin', 'user'], icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>' },
+      { id: 'ingredients', label: 'Bahan Pakan ID', short: 'Bahan', roles: ['admin', 'user'], icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>' },
+      { id: 'standards', label: 'Standar Ternak', short: 'Standar', roles: ['admin', 'user'], icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>' },
+      { id: 'history', label: 'Riwayat Formulasi', short: 'Riwayat', roles: ['admin', 'user'], icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' },
+      { id: 'users', label: 'Manajemen User', short: 'Users', roles: ['admin'], icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>' }
+    ];
+
+    function enterAppShell() {
+      document.getElementById('prelogin-view').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+
+      const u = state.currentUser;
+      document.getElementById('sidebar-role-label').textContent = u.role === 'admin' ? 'Administrator' : 'Portal Peternak';
+      document.getElementById('sidebar-user-name').textContent = u.nama_lengkap;
+      document.getElementById('sidebar-user-sub').textContent = u.role === 'admin' ? u.email : (u.nama_peternakan || u.username);
+      document.getElementById('sidebar-avatar').textContent = (u.nama_lengkap || 'U').charAt(0).toUpperCase();
+
+      if (IS_PREVIEW) {
+        document.getElementById('app-preview-banner').classList.remove('hidden');
+        document.getElementById('mobile-preview-pill').classList.remove('hidden');
+      } else {
+        document.getElementById('app-preview-banner').classList.add('hidden');
+        document.getElementById('mobile-preview-pill').classList.add('hidden');
+      }
+
+      renderNavigation();
+      renderActivePage();
+    }
+
+    function renderNavigation() {
+      const role = state.currentUser?.role || 'user';
+      const allowed = MENU_ITEMS.filter((m) => m.roles.includes(role));
+
+      const desktopNav = document.getElementById('desktop-nav-list');
+      desktopNav.innerHTML = allowed.map((m) => {
+        const active = state.activeTab === m.id;
+        return `
+          <button type="button" onclick="window.navigateTo('${m.id}')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}">
+            <svg class="w-5 h-5 shrink-0 ${active ? 'text-brand-600' : 'text-slate-400'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${m.icon}</svg>
+            <span>${m.label}</span>
+          </button>
+        `;
+      }).join('');
+
+      const mobileNav = document.getElementById('mobile-nav-list');
+      mobileNav.innerHTML = allowed.map((m) => {
+        const active = state.activeTab === m.id;
+        return `
+          <button type="button" onclick="window.navigateTo('${m.id}')" class="flex flex-col items-center justify-center py-1 px-2 rounded-xl min-w-[50px] transition ${active ? 'text-brand-700 bg-brand-50/90' : 'text-slate-500'}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${m.icon}</svg>
+            <span class="text-[10px] font-bold mt-0.5">${m.short}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    window.navigateTo = function(tabId) {
+      state.activeTab = tabId;
+      renderNavigation();
+      renderActivePage();
+      document.getElementById('nutriternak-root').scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function renderActivePage() {
+      if (!state.currentUser) return;
+      const container = document.getElementById('page-content');
+      switch (state.activeTab) {
+        case 'dashboard': renderDashboard(container); break;
+        case 'calculator': renderCalculator(container); break;
+        case 'ingredients': renderIngredients(container); break;
+        case 'standards': renderStandards(container); break;
+        case 'history': renderHistory(container); break;
+        case 'users': renderUsers(container); break;
+        default: renderDashboard(container);
+      }
+    }
+
+    // ==================== 1. DASHBOARD PAGE ====================
+    function renderDashboard(container) {
+      const myFormulations = state.currentUser.role === 'admin'
+        ? state.formulations
+        : state.formulations.filter((f) => f.owner_id === state.currentUser.uid);
+
+      const latestIngredients = [...state.feed_ingredients]
+        .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+        .slice(0, 6);
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-900">Dashboard Formulasi Pakan</h2>
+              <p class="text-sm text-slate-500">Halo, <span class="font-semibold text-slate-700">${escapeHtml(state.currentUser.nama_lengkap)}</span>. Pantau data bahan pakan dan susun ransum optimal hari ini.</p>
+            </div>
+            <button type="button" onclick="window.navigateTo('calculator')" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-bold shadow-sm transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Buat Formulasi Baru
+            </button>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="glass-panel rounded-2xl p-5 shadow-sm">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Bahan Pakan Aktif</p>
+              <p class="text-3xl font-extrabold text-slate-900 mt-2">${state.feed_ingredients.length}</p>
+              <p class="text-xs text-brand-600 font-semibold mt-1">Tersedia di database Indonesia</p>
+            </div>
+            <div class="glass-panel rounded-2xl p-5 shadow-sm">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Standar Nutrisi Ternak</p>
+              <p class="text-3xl font-extrabold text-slate-900 mt-2">${state.livestock_standards.length}</p>
+              <p class="text-xs text-emerald-600 font-semibold mt-1">Acuan jenis &amp; fase ternak</p>
+            </div>
+            <div class="glass-panel rounded-2xl p-5 shadow-sm">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Formulasi Tersimpan</p>
+              <p class="text-3xl font-extrabold text-slate-900 mt-2">${myFormulations.length}</p>
+              <p class="text-xs text-indigo-600 font-semibold mt-1">Siap dihitung ulang &amp; dicetak</p>
+            </div>
+          </div>
+
+          <!-- Pembaruan Harga Bahan Pakan Terbaru -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-extrabold text-slate-900">Pembaruan Harga Bahan Pakan Terbaru</h3>
+                <p class="text-xs text-slate-500">Referensi harga pasar dan kandungan nutrisi inti per kg</p>
+              </div>
+              <button type="button" onclick="window.navigateTo('ingredients')" class="text-xs font-bold text-brand-600 hover:text-brand-800">Lihat Semua &rarr;</button>
+            </div>
+
+            ${latestIngredients.length === 0 ? `
+              <div class="p-10 text-center text-sm text-slate-500">Belum ada data bahan pakan. ${state.currentUser.role === 'admin' ? 'Silakan tambahkan melalui menu Bahan Pakan ID.' : 'Menunggu Admin menambahkan data bahan pakan.'}</div>
+            ` : `
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                      <th class="px-5 py-3 font-bold">Nama Bahan</th>
+                      <th class="px-4 py-3 font-bold">Kategori</th>
+                      <th class="px-4 py-3 font-bold text-right">PK (%)</th>
+                      <th class="px-4 py-3 font-bold text-right">EM (kkal)</th>
+                      <th class="px-4 py-3 font-bold text-right">TDN (%)</th>
+                      <th class="px-4 py-3 font-bold text-right">Harga/Kg</th>
+                      <th class="px-5 py-3 font-bold text-right">Diperbarui</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-sm">
+                    ${latestIngredients.map((item) => `
+                      <tr class="hover:bg-slate-50/70">
+                        <td class="px-5 py-3 font-bold text-slate-900">${escapeHtml(item.nama_bahan)}</td>
+                        <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-semibold">${escapeHtml(item.kategori)}</span></td>
+                        <td class="px-4 py-3 text-right font-semibold">${fmtNum(item.pk, 1)}%</td>
+                        <td class="px-4 py-3 text-right">${Math.round(Number(item.em) || 0)}</td>
+                        <td class="px-4 py-3 text-right">${fmtNum(item.tdn, 1)}%</td>
+                        <td class="px-4 py-3 text-right font-bold text-emerald-700">${fmtRp(item.harga_per_kg)}</td>
+                        <td class="px-5 py-3 text-right text-xs text-slate-500">${escapeHtml(item.updated_at || '-')}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== 2. KALKULATOR FORMULASI PAKAN ====================
+    function computeFormulationMetrics() {
+      const totalBerat = Math.max(1, Number(state.calc.total_berat_kg) || 100);
+      let totalPersen = 0;
+      let bk = 0, pk = 0, em = 0, tdn = 0, sk = 0, lk = 0, ca = 0, p = 0;
+      let biayaPerKg = 0;
+      const warnings = [];
+      const detailedRows = [];
+
+      state.calc.items.forEach((row, idx) => {
+        const ing = state.feed_ingredients.find((i) => i.id === row.ingredient_id);
+        const pct = Math.max(0, Number(row.persentase) || 0);
+        totalPersen += pct;
+        if (!ing) return;
+
+        const ratio = pct / 100;
+        bk += ratio * (Number(ing.bk) || 0);
+        pk += ratio * (Number(ing.pk) || 0);
+        em += ratio * (Number(ing.em) || 0);
+        tdn += ratio * (Number(ing.tdn) || 0);
+        sk += ratio * (Number(ing.sk) || 0);
+        lk += ratio * (Number(ing.lk) || 0);
+        ca += ratio * (Number(ing.ca) || 0);
+        p += ratio * (Number(ing.p) || 0);
+        biayaPerKg += ratio * (Number(ing.harga_per_kg) || 0);
+
+        const maxLim = Number(ing.batas_maksimal) || 100;
+        if (pct > maxLim) {
+          warnings.push(`${ing.nama_bahan} (${pct}%) melebihi batas aman maksimal (${maxLim}%).`);
+        }
+
+        detailedRows.push({
+          idx,
+          ingredient_id: ing.id,
+          nama_bahan: ing.nama_bahan,
+          persentase: pct,
+          berat_kg: ratio * totalBerat,
+          harga_per_kg: Number(ing.harga_per_kg) || 0,
+          subtotal: ratio * totalBerat * (Number(ing.harga_per_kg) || 0),
+          batas_maksimal: maxLim
+        });
+      });
+
+      return {
+        totalPersen,
+        totalBerat,
+        biayaPerKg,
+        totalBiaya: biayaPerKg * totalBerat,
+        nutrisi: { bk, pk, em, tdn, sk, lk, ca, p },
+        warnings,
+        detailedRows
+      };
+    }
+
+    function getNutrientStatusBadge(val, min, max, isMaxOnly = false) {
+      if (isMaxOnly) {
+        if (!max || max <= 0) return '<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">Opsional</span>';
+        return val <= max
+          ? '<span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold">Ideal</span>'
+          : '<span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold">Berlebih</span>';
+      }
+      if ((!min || min <= 0) && (!max || max <= 0)) {
+        return '<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">Opsional</span>';
+      }
+      if (min > 0 && val < min) return '<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">Kurang</span>';
+      if (max > 0 && val > max) return '<span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold">Berlebih</span>';
+      return '<span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold">Ideal</span>';
+    }
+
+    function renderCalculator(container) {
+      if (!state.calc.standard_id && state.livestock_standards.length > 0) {
+        state.calc.standard_id = state.livestock_standards[0].id;
+      }
+      const selectedStd = state.livestock_standards.find((s) => s.id === state.calc.standard_id);
+      const metrics = computeFormulationMetrics();
+
+      const pctDiff = Math.round((100 - metrics.totalPersen) * 100) / 100;
+      const pctBadgeClass = Math.abs(pctDiff) < 0.01
+        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+        : pctDiff > 0
+          ? 'bg-amber-100 text-amber-800 border-amber-200'
+          : 'bg-rose-100 text-rose-800 border-rose-200';
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-900">Kalkulator Formulasi Pakan</h2>
+              <p class="text-sm text-slate-500">Hitung keseimbangan nutrisi, cek batas pemakaian bahan, dan estimasi biaya ransum.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" onclick="window.resetCalculator()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition">Reset</button>
+              <button type="button" onclick="window.openPrintFormulation()" class="px-4 py-2 rounded-xl border border-brand-200 bg-brand-50 hover:bg-brand-100 text-xs font-bold text-brand-700 transition">Cetak Ringkasan</button>
+              <button type="button" onclick="window.saveCurrentFormulation()" class="px-5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-xs font-bold text-white shadow-sm transition">Simpan Formulasi</button>
+            </div>
+          </div>
+
+          <!-- Pengaturan Umum Ransum -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Resep / Formulasi</label>
+              <input type="text" id="calc-name-input" value="${escapeHtml(state.calc.nama_formulasi)}" oninput="window.updateCalcMeta('nama_formulasi', this.value)" placeholder="Contoh: Ransum Broiler Starter Pagi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Jenis &amp; Fase Ternak (Standar Acuan)</label>
+              <select id="calc-std-select" onchange="window.updateCalcMeta('standard_id', this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                ${state.livestock_standards.length === 0 ? '<option value="">Belum ada standar ternak</option>' : ''}
+                ${state.livestock_standards.map((s) => `
+                  <option value="${s.id}" ${s.id === state.calc.standard_id ? 'selected' : ''}>[${escapeHtml(s.kelompok)}] ${escapeHtml(s.jenis_ternak)} — ${escapeHtml(s.fase)}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Target Total Berat Batch (kg)</label>
+              <input type="number" min="1" step="1" value="${state.calc.total_berat_kg}" oninput="window.updateCalcMeta('total_berat_kg', this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Grid Utama: Komposisi Bahan (Kiri) & Analisis Nutrisi (Kanan) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Komposisi Bahan -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+              <div class="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-base font-extrabold text-slate-900">Komposisi Bahan Pakan</h3>
+                  <p class="text-xs text-slate-500">Pastikan total proporsi mencapai 100% untuk hasil presisi.</p>
+                </div>
+                <span class="px-3 py-1 rounded-full border text-xs font-extrabold ${pctBadgeClass}">
+                  Total: ${fmtNum(metrics.totalPersen, 1)}% ${Math.abs(pctDiff) < 0.01 ? '(Pas)' : pctDiff > 0 ? `(Kurang ${pctDiff}%)` : `(Lebih ${Math.abs(pctDiff)}%)`}
+                </span>
+              </div>
+
+              <!-- Tambah Bahan Bar -->
+              <div class="p-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row gap-2.5">
+                <select id="calc-add-ing-select" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm">
+                  <option value="">-- Pilih Bahan Pakan Indonesia --</option>
+                  ${state.feed_ingredients.map((i) => `<option value="${i.id}">${escapeHtml(i.nama_bahan)} (PK ${i.pk}% • ${fmtRp(i.harga_per_kg)}/kg)</option>`).join('')}
+                </select>
+                <input type="number" id="calc-add-pct" min="0.1" max="100" step="0.5" placeholder="Proporsi (%)" class="w-full sm:w-32 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm">
+                <button type="button" onclick="window.addCalcIngredient()" class="px-4 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold transition shrink-0">+ Tambah</button>
+              </div>
+
+              <!-- Daftar Baris Bahan -->
+              <div class="p-4 space-y-3 flex-1">
+                ${metrics.detailedRows.length === 0 ? `
+                  <div class="py-10 text-center text-sm text-slate-400">
+                    Belum ada bahan yang dimasukkan ke ransum. Pilih bahan di atas lalu klik <b>+ Tambah</b>.
+                  </div>
+                ` : metrics.detailedRows.map((row) => `
+                  <div class="p-3.5 rounded-xl border ${row.persentase > row.batas_maksimal ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200 bg-white'} flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="min-w-0">
+                      <p class="text-sm font-bold text-slate-900 truncate">${escapeHtml(row.nama_bahan)}</p>
+                      <p class="text-xs text-slate-500">Berat: <b>${fmtNum(row.berat_kg, 2)} kg</b> • Harga: ${fmtRp(row.harga_per_kg)}/kg • Subtotal: <b class="text-slate-800">${fmtRp(row.subtotal)}</b></p>
+                      ${row.persentase > row.batas_maksimal ? `<p class="text-[11px] font-bold text-rose-600 mt-1">⚠ Melebihi batas maksimal aman (${row.batas_maksimal}%)</p>` : ''}
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                      <input type="number" min="0" max="100" step="0.5" value="${row.persentase}" onchange="window.updateCalcRowPct(${row.idx}, this.value)" class="w-20 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-bold text-right">
+                      <span class="text-xs font-bold text-slate-500">%</span>
+                      <button type="button" onclick="window.removeCalcRow(${row.idx})" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+
+                ${metrics.warnings.length > 0 ? `
+                  <div class="mt-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1">
+                    <p class="font-bold">Peringatan Batas Penggunaan Bahan:</p>
+                    ${metrics.warnings.map((w) => `<p>• ${escapeHtml(w)}</p>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Panel Analisis Nutrisi & Biaya -->
+            <div class="lg:col-span-5 space-y-4">
+              <!-- Ringkasan Biaya -->
+              <div class="bg-brand-700 text-white rounded-2xl p-5 shadow-md shadow-brand-700/20">
+                <p class="text-xs font-semibold text-brand-100 uppercase tracking-wider">Estimasi Biaya Ransum</p>
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <p class="text-[11px] text-brand-200">Biaya per Kilogram</p>
+                    <p class="text-2xl font-extrabold">${fmtRp(metrics.biayaPerKg)}</p>
+                  </div>
+                  <div>
+                    <p class="text-[11px] text-brand-200">Total Batch (${metrics.totalBerat} kg)</p>
+                    <p class="text-2xl font-extrabold">${fmtRp(metrics.totalBiaya)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tabel Perbandingan Nutrisi vs Standar -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <h3 class="text-base font-extrabold text-slate-900">Profil Nutrisi vs Standar</h3>
+                <p class="text-xs text-slate-500 mb-4">${selectedStd ? `${escapeHtml(selectedStd.jenis_ternak)} (${escapeHtml(selectedStd.fase)})` : 'Pilih standar ternak untuk evaluasi'}</p>
+
+                <div class="space-y-2.5 text-sm">
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">Bahan Kering (BK)</p>
+                      <p class="text-[11px] text-slate-400">Kadar kering ransum</p>
+                    </div>
+                    <div class="text-right">
+                      <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.bk, 2)}%</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">Protein Kasar (PK)</p>
+                      <p class="text-[11px] text-slate-400">Target: ${selectedStd ? `${selectedStd.target_pk_min}–${selectedStd.target_pk_max}%` : '-'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.pk, 2)}%</span>
+                      ${selectedStd ? getNutrientStatusBadge(metrics.nutrisi.pk, selectedStd.target_pk_min, selectedStd.target_pk_max) : ''}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">Energi Metabolis (EM)</p>
+                      <p class="text-[11px] text-slate-400">Min: ${selectedStd && selectedStd.target_em_min > 0 ? `${selectedStd.target_em_min} kkal/kg` : 'Opsional'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-extrabold text-slate-900">${Math.round(metrics.nutrisi.em)} kkal</span>
+                      ${selectedStd ? getNutrientStatusBadge(metrics.nutrisi.em, selectedStd.target_em_min, 0) : ''}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">TDN (Ruminansia)</p>
+                      <p class="text-[11px] text-slate-400">Min: ${selectedStd && selectedStd.target_tdn_min > 0 ? `${selectedStd.target_tdn_min}%` : 'Opsional'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.tdn, 2)}%</span>
+                      ${selectedStd ? getNutrientStatusBadge(metrics.nutrisi.tdn, selectedStd.target_tdn_min, 0) : ''}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">Serat Kasar (SK)</p>
+                      <p class="text-[11px] text-slate-400">Maks: ${selectedStd && selectedStd.target_sk_max > 0 ? `${selectedStd.target_sk_max}%` : 'Opsional'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.sk, 2)}%</span>
+                      ${selectedStd ? getNutrientStatusBadge(metrics.nutrisi.sk, 0, selectedStd.target_sk_max, true) : ''}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">Lemak Kasar (LK)</p>
+                      <p class="text-[11px] text-slate-400">Estimasi kadar lemak</p>
+                    </div>
+                    <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.lk, 2)}%</span>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                    <div>
+                      <p class="font-bold text-slate-800">Kalsium (Ca)</p>
+                      <p class="text-[11px] text-slate-400">Min: ${selectedStd && selectedStd.target_ca_min > 0 ? `${selectedStd.target_ca_min}%` : 'Opsional'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.ca, 2)}%</span>
+                      ${selectedStd ? getNutrientStatusBadge(metrics.nutrisi.ca, selectedStd.target_ca_min, 0) : ''}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between py-2">
+                    <div>
+                      <p class="font-bold text-slate-800">Fosfor (P)</p>
+                      <p class="text-[11px] text-slate-400">Min: ${selectedStd && selectedStd.target_p_min > 0 ? `${selectedStd.target_p_min}%` : 'Opsional'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-extrabold text-slate-900">${fmtNum(metrics.nutrisi.p, 2)}%</span>
+                      ${selectedStd ? getNutrientStatusBadge(metrics.nutrisi.p, selectedStd.target_p_min, 0) : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    window.updateCalcMeta = function(field, value) {
+      state.calc[field] = field === 'total_berat_kg' ? Number(value) || 1 : value;
+      if (field !== 'nama_formulasi') renderActivePage();
+    };
+
+    window.addCalcIngredient = function() {
+      const ingId = document.getElementById('calc-add-ing-select').value;
+      const pct = Number(document.getElementById('calc-add-pct').value);
+      if (!ingId) return showToast('Pilih bahan pakan terlebih dahulu.', 'warning');
+      if (!pct || pct <= 0) return showToast('Masukkan proporsi persentase lebih dari 0.', 'warning');
+
+      const existing = state.calc.items.find((i) => i.ingredient_id === ingId);
+      if (existing) {
+        existing.persentase = Math.round((existing.persentase + pct) * 100) / 100;
+      } else {
+        state.calc.items.push({ ingredient_id: ingId, persentase: pct });
+      }
+      renderActivePage();
+    };
+
+    window.updateCalcRowPct = function(idx, val) {
+      if (state.calc.items[idx]) {
+        state.calc.items[idx].persentase = Math.max(0, Number(val) || 0);
+        renderActivePage();
+      }
+    };
+
+    window.removeCalcRow = function(idx) {
+      state.calc.items.splice(idx, 1);
+      renderActivePage();
+    };
+
+    window.resetCalculator = function() {
+      state.calc = {
+        nama_formulasi: '',
+        standard_id: state.livestock_standards[0]?.id || '',
+        total_berat_kg: 100,
+        items: []
+      };
+      renderActivePage();
+      showToast('Kalkulator telah direset.', 'info');
+    };
+
+    window.saveCurrentFormulation = async function() {
+      const nameInput = document.getElementById('calc-name-input');
+      if (nameInput) state.calc.nama_formulasi = nameInput.value.trim();
+
+      const metrics = computeFormulationMetrics();
+      if (!state.calc.nama_formulasi) return showToast('Isi nama resep formulasi terlebih dahulu.', 'warning');
+      if (metrics.detailedRows.length === 0) return showToast('Tambahkan minimal satu bahan pakan.', 'warning');
+
+      const selectedStd = state.livestock_standards.find((s) => s.id === state.calc.standard_id);
+      const payload = {
+        nama_formulasi: state.calc.nama_formulasi,
+        owner_id: state.currentUser.uid,
+        owner_role: state.currentUser.role,
+        standard_id: state.calc.standard_id || '',
+        jenis_ternak_label: selectedStd ? `${selectedStd.jenis_ternak} — ${selectedStd.fase}` : 'Umum',
+        total_berat_kg: metrics.totalBerat,
+        komposisi: metrics.detailedRows.map((r) => ({
+          ingredient_id: r.ingredient_id,
+          nama_bahan: r.nama_bahan,
+          persentase: r.persentase,
+          berat_kg: Number(r.berat_kg.toFixed(2)),
+          harga_per_kg: r.harga_per_kg
+        })),
+        hasil_nutrisi: {
+          bk: Number(metrics.nutrisi.bk.toFixed(2)),
+          pk: Number(metrics.nutrisi.pk.toFixed(2)),
+          em: Number(metrics.nutrisi.em.toFixed(1)),
+          tdn: Number(metrics.nutrisi.tdn.toFixed(2)),
+          sk: Number(metrics.nutrisi.sk.toFixed(2)),
+          lk: Number(metrics.nutrisi.lk.toFixed(2)),
+          ca: Number(metrics.nutrisi.ca.toFixed(2)),
+          p: Number(metrics.nutrisi.p.toFixed(2))
+        },
+        biaya_per_kg: Math.round(metrics.biayaPerKg),
+        total_biaya: Math.round(metrics.totalBiaya),
+        created_at: todayStr()
+      };
+
+      try {
+        if (IS_PREVIEW) {
+          state.formulations.unshift({ id: 'form-' + Date.now(), ...payload });
+          showToast('Formulasi berhasil disimpan (Mode Preview).', 'success');
+        } else {
+          await addDoc(collection(db, 'formulations'), payload);
+          showToast('Formulasi berhasil disimpan ke Cloud Database.', 'success');
+        }
+      } catch (err) {
+        showToast('Gagal menyimpan formulasi: ' + err.message, 'error');
+      }
+    };
+
+    window.openPrintFormulation = function(formulationObj = null) {
+      let data = formulationObj;
+      if (!data) {
+        const metrics = computeFormulationMetrics();
+        if (metrics.detailedRows.length === 0) return showToast('Belum ada komposisi bahan untuk dicetak.', 'warning');
+        const std = state.livestock_standards.find((s) => s.id === state.calc.standard_id);
+        data = {
+          nama_formulasi: state.calc.nama_formulasi || 'Ransum Tanpa Judul',
+          jenis_ternak_label: std ? `${std.jenis_ternak} — ${std.fase}` : 'Umum',
+          total_berat_kg: metrics.totalBerat,
+          komposisi: metrics.detailedRows,
+          hasil_nutrisi: metrics.nutrisi,
+          biaya_per_kg: metrics.biayaPerKg,
+          total_biaya: metrics.totalBiaya,
+          created_at: todayStr()
+        };
+      }
+
+      const body = `
+        <div id="print-area" class="space-y-4 text-slate-900">
+          <div class="border-b border-slate-200 pb-3 flex justify-between items-start">
+            <div>
+              <h4 class="text-lg font-extrabold">Lembar Formulasi Ransum — NutriTernak ID</h4>
+              <p class="text-sm font-bold text-brand-700">${escapeHtml(data.nama_formulasi)}</p>
+              <p class="text-xs text-slate-500">Target Ternak: ${escapeHtml(data.jenis_ternak_label)} • Batch: ${data.total_berat_kg} kg</p>
+            </div>
+            <span class="text-xs text-slate-500">Tanggal: ${escapeHtml(data.created_at || todayStr())}</span>
+          </div>
+
+          <table class="w-full text-xs border border-slate-200 border-collapse">
+            <thead>
+              <tr class="bg-slate-50">
+                <th class="border border-slate-200 px-3 py-2 text-left">Bahan Pakan</th>
+                <th class="border border-slate-200 px-3 py-2 text-right">Proporsi (%)</th>
+                <th class="border border-slate-200 px-3 py-2 text-right">Berat (kg)</th>
+                <th class="border border-slate-200 px-3 py-2 text-right">Harga/kg</th>
+                <th class="border border-slate-200 px-3 py-2 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(data.komposisi || []).map((k) => `
+                <tr>
+                  <td class="border border-slate-200 px-3 py-1.5 font-semibold">${escapeHtml(k.nama_bahan)}</td>
+                  <td class="border border-slate-200 px-3 py-1.5 text-right">${fmtNum(k.persentase, 1)}%</td>
+                  <td class="border border-slate-200 px-3 py-1.5 text-right">${fmtNum(k.berat_kg, 2)} kg</td>
+                  <td class="border border-slate-200 px-3 py-1.5 text-right">${fmtRp(k.harga_per_kg)}</td>
+                  <td class="border border-slate-200 px-3 py-1.5 text-right">${fmtRp((Number(k.berat_kg) || 0) * (Number(k.harga_per_kg) || 0))}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="grid grid-cols-4 gap-2 text-center text-xs">
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">BK</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.bk, 1)}%</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">PK</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.pk, 2)}%</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">EM</p><p class="font-bold">${Math.round(data.hasil_nutrisi?.em || 0)} kkal</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">TDN</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.tdn, 1)}%</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">SK</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.sk, 2)}%</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">LK</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.lk, 2)}%</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">Ca</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.ca, 2)}%</p></div>
+            <div class="p-2 rounded-lg bg-slate-50 border border-slate-200"><p class="text-slate-500">P</p><p class="font-bold">${fmtNum(data.hasil_nutrisi?.p, 2)}%</p></div>
+          </div>
+
+          <div class="flex justify-between items-center p-3 rounded-xl bg-brand-50 border border-brand-100 text-sm">
+            <span>Biaya per Kg: <b class="text-brand-800">${fmtRp(data.biaya_per_kg)}</b></span>
+            <span>Total Biaya Batch: <b class="text-brand-800">${fmtRp(data.total_biaya)}</b></span>
+          </div>
+
+          <div class="no-print flex justify-end gap-2 pt-2">
+            <button type="button" onclick="window.closeCrudModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">Tutup</button>
+            <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl bg-brand-700 text-white text-xs font-bold">Cetak / Simpan PDF</button>
+          </div>
+        </div>
+      `;
+      openCrudModal('Ringkasan & Cetak Formulasi', body);
+    };
+
+    // ==================== 3. DATABASE BAHAN PAKAN INDONESIA ====================
+    const INGREDIENT_CATEGORIES = ['Semua', 'Sumber Energi', 'Sumber Protein Nabati', 'Sumber Protein Hewani', 'Hijauan & Limbah', 'Mineral & Aditif'];
+
+    function renderIngredients(container) {
+      const isAdmin = state.currentUser.role === 'admin';
+      const filtered = state.feed_ingredients.filter((item) => {
+        const matchCat = state.ingredientCategory === 'Semua' || item.kategori === state.ingredientCategory;
+        const q = state.ingredientSearch.toLowerCase();
+        const matchSearch = !q || (item.nama_bahan || '').toLowerCase().includes(q) || (item.keterangan || '').toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      });
+
+      container.innerHTML = `
+        <div class="space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-900">Database Bahan Pakan Indonesia</h2>
+              <p class="text-sm text-slate-500">Komposisi nutrisi, batas penggunaan aman, dan harga pasar terbaru per kg.</p>
+            </div>
+            ${isAdmin ? `
+              <button type="button" onclick="window.openIngredientForm()" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold shadow-sm transition">+ Tambah Bahan Pakan</button>
+            ` : ''}
+          </div>
+
+          <!-- Search & Filter -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col md:flex-row gap-3">
+            <input type="text" value="${escapeHtml(state.ingredientSearch)}" oninput="window.setIngredientFilter('search', this.value)" placeholder="Cari nama bahan (misal: Jagung, Dedak, Bungkil, Tepung Ikan)..." class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <select onchange="window.setIngredientFilter('category', this.value)" class="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm">
+              ${INGREDIENT_CATEGORIES.map((c) => `<option value="${c}" ${state.ingredientCategory === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+
+          <!-- Tabel / Cards Bahan -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            ${filtered.length === 0 ? `
+              <div class="p-12 text-center text-sm text-slate-500">Belum ada data bahan pakan yang sesuai filter.</div>
+            ` : `
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                      <th class="px-4 py-3 font-bold">Bahan &amp; Kategori</th>
+                      <th class="px-3 py-3 font-bold text-right">Harga/Kg</th>
+                      <th class="px-3 py-3 font-bold text-right">BK%</th>
+                      <th class="px-3 py-3 font-bold text-right">PK%</th>
+                      <th class="px-3 py-3 font-bold text-right">EM</th>
+                      <th class="px-3 py-3 font-bold text-right">TDN%</th>
+                      <th class="px-3 py-3 font-bold text-right">SK%</th>
+                      <th class="px-3 py-3 font-bold text-right">Ca/P%</th>
+                      <th class="px-3 py-3 font-bold text-right">Maks%</th>
+                      ${isAdmin ? '<th class="px-4 py-3 font-bold text-right">Aksi</th>' : ''}
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-xs">
+                    ${filtered.map((item) => `
+                      <tr class="hover:bg-slate-50/70">
+                        <td class="px-4 py-3">
+                          <p class="font-bold text-slate-900 text-sm">${escapeHtml(item.nama_bahan)}</p>
+                          <span class="inline-block mt-0.5 px-2 py-0.5 rounded bg-brand-50 text-brand-700 text-[10px] font-semibold">${escapeHtml(item.kategori)}</span>
+                          <p class="text-[11px] text-slate-400 mt-0.5">Update: ${escapeHtml(item.updated_at || '-')}</p>
+                        </td>
+                        <td class="px-3 py-3 text-right font-extrabold text-emerald-700 whitespace-nowrap">${fmtRp(item.harga_per_kg)}</td>
+                        <td class="px-3 py-3 text-right">${fmtNum(item.bk, 1)}</td>
+                        <td class="px-3 py-3 text-right font-bold text-slate-900">${fmtNum(item.pk, 1)}</td>
+                        <td class="px-3 py-3 text-right">${Math.round(Number(item.em) || 0)}</td>
+                        <td class="px-3 py-3 text-right">${fmtNum(item.tdn, 1)}</td>
+                        <td class="px-3 py-3 text-right">${fmtNum(item.sk, 1)}</td>
+                        <td class="px-3 py-3 text-right whitespace-nowrap">${fmtNum(item.ca, 2)} / ${fmtNum(item.p, 2)}</td>
+                        <td class="px-3 py-3 text-right font-semibold text-amber-700">${item.batas_maksimal}%</td>
+                        ${isAdmin ? `
+                          <td class="px-4 py-3 text-right whitespace-nowrap space-x-1">
+                            <button type="button" onclick="window.openIngredientForm('${item.id}')" class="px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 font-bold">Edit</button>
+                            <button type="button" onclick="window.deleteIngredient('${item.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold">Hapus</button>
+                          </td>
+                        ` : ''}
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    window.setIngredientFilter = function(type, val) {
+      if (type === 'search') state.ingredientSearch = val;
+      if (type === 'category') state.ingredientCategory = val;
+      renderActivePage();
+    };
+
+    window.openIngredientForm = function(editId = null) {
+      const existing = editId ? state.feed_ingredients.find((i) => i.id === editId) : null;
+      const body = `
+        <form id="ingredient-crud-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Bahan Pakan *</label>
+              <input name="nama_bahan" required value="${escapeHtml(existing?.nama_bahan || '')}" placeholder="Contoh: Dedak Padi Halus" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kategori *</label>
+              <select name="kategori" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+                ${INGREDIENT_CATEGORIES.filter((c) => c !== 'Semua').map((c) => `<option value="${c}" ${existing?.kategori === c ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Harga per Kg (Rp) *</label>
+              <input name="harga_per_kg" type="number" min="0" required value="${existing?.harga_per_kg ?? ''}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Batas Pemakaian Maksimal (%) *</label>
+              <input name="batas_maksimal" type="number" min="1" max="100" required value="${existing?.batas_maksimal ?? 100}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">BK (%)</label><input name="bk" type="number" step="0.01" value="${existing?.bk ?? 88}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">PK (%)</label><input name="pk" type="number" step="0.01" value="${existing?.pk ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">EM (kkal/kg)</label><input name="em" type="number" step="1" value="${existing?.em ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">TDN (%)</label><input name="tdn" type="number" step="0.01" value="${existing?.tdn ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">SK (%)</label><input name="sk" type="number" step="0.01" value="${existing?.sk ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">LK (%)</label><input name="lk" type="number" step="0.01" value="${existing?.lk ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">Ca (%)</label><input name="ca" type="number" step="0.01" value="${existing?.ca ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">P (%)</label><input name="p" type="number" step="0.01" value="${existing?.p ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan / Sumber Lokal</label>
+            <textarea name="keterangan" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">${escapeHtml(existing?.keterangan || '')}</textarea>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="window.closeCrudModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">Batal</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold">${editId ? 'Simpan Perubahan' : 'Simpan Bahan'}</button>
+          </div>
+        </form>
+      `;
+
+      openCrudModal(editId ? 'Edit & Perbarui Bahan Pakan' : 'Tambah Bahan Pakan Indonesia', body);
+
+      document.getElementById('ingredient-crud-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const payload = {
+          nama_bahan: fd.get('nama_bahan').trim(),
+          kategori: fd.get('kategori'),
+          harga_per_kg: Number(fd.get('harga_per_kg')) || 0,
+          batas_maksimal: Number(fd.get('batas_maksimal')) || 100,
+          bk: Number(fd.get('bk')) || 0,
+          pk: Number(fd.get('pk')) || 0,
+          em: Number(fd.get('em')) || 0,
+          tdn: Number(fd.get('tdn')) || 0,
+          sk: Number(fd.get('sk')) || 0,
+          lk: Number(fd.get('lk')) || 0,
+          ca: Number(fd.get('ca')) || 0,
+          p: Number(fd.get('p')) || 0,
+          keterangan: fd.get('keterangan').trim(),
+          updated_at: todayStr()
+        };
+
+        try {
+          if (IS_PREVIEW) {
+            if (editId) {
+              const idx = state.feed_ingredients.findIndex((i) => i.id === editId);
+              if (idx >= 0) state.feed_ingredients[idx] = { id: editId, ...payload };
+            } else {
+              state.feed_ingredients.unshift({ id: 'ing-' + Date.now(), ...payload });
+            }
+            window.closeCrudModal();
+            renderActivePage();
+            showToast('Data bahan pakan berhasil disimpan.', 'success');
+          } else {
+            if (editId) {
+              await updateDoc(doc(db, 'feed_ingredients', editId), payload);
+            } else {
+              await addDoc(collection(db, 'feed_ingredients'), payload);
+            }
+            window.closeCrudModal();
+            showToast('Data bahan pakan berhasil diperbarui di Firestore.', 'success');
+          }
+        } catch (err) {
+          showToast('Gagal menyimpan bahan: ' + err.message, 'error');
+        }
+      };
+    };
+
+    window.deleteIngredient = async function(id) {
+      const ok = await customConfirm('Hapus Bahan Pakan', 'Data bahan pakan ini akan dihapus secara permanen. Lanjutkan?');
+      if (!ok) return;
+      try {
+        if (IS_PREVIEW) {
+          state.feed_ingredients = state.feed_ingredients.filter((i) => i.id !== id);
+          renderActivePage();
+        } else {
+          await deleteDoc(doc(db, 'feed_ingredients', id));
+        }
+        showToast('Bahan pakan berhasil dihapus.', 'info');
+      } catch (err) {
+        showToast('Gagal menghapus: ' + err.message, 'error');
+      }
+    };
+
+    // ==================== 4. STANDAR NUTRISI TERNAK ====================
+    const LIVESTOCK_GROUPS = ['Semua', 'Unggas', 'Ruminansia', 'Lainnya'];
+
+    function renderStandards(container) {
+      const isAdmin = state.currentUser.role === 'admin';
+      const filtered = state.livestock_standards.filter((s) => state.standardGroup === 'Semua' || s.kelompok === state.standardGroup);
+
+      container.innerHTML = `
+        <div class="space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-900">Standar Kebutuhan Nutrisi Ternak</h2>
+              <p class="text-sm text-slate-500">Acuan target nutrisi berdasarkan jenis dan fase pemeliharaan ternak.</p>
+            </div>
+            ${isAdmin ? `
+              <button type="button" onclick="window.openStandardForm()" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold shadow-sm transition">+ Tambah Standar Ternak</button>
+            ` : ''}
+          </div>
+
+          <!-- Filter Kelompok -->
+          <div class="flex flex-wrap gap-2">
+            ${LIVESTOCK_GROUPS.map((g) => `
+              <button type="button" onclick="window.setStandardGroup('${g}')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${state.standardGroup === g ? 'bg-brand-700 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}">${g}</button>
+            `).join('')}
+          </div>
+
+          ${filtered.length === 0 ? `
+            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-sm text-slate-500">Belum ada standar kebutuhan nutrisi ternak untuk kelompok ini.</div>
+          ` : `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${filtered.map((s) => `
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-start justify-between gap-2">
+                      <div>
+                        <span class="px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 text-[10px] font-bold uppercase">${escapeHtml(s.kelompok)}</span>
+                        <h3 class="text-base font-extrabold text-slate-900 mt-1">${escapeHtml(s.jenis_ternak)}</h3>
+                        <p class="text-xs font-semibold text-slate-500">${escapeHtml(s.fase)}</p>
+                      </div>
+                      <span class="text-[11px] text-slate-400">Update: ${escapeHtml(s.updated_at || '-')}</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2.5 mt-4 text-xs">
+                      <div class="p-2.5 rounded-xl bg-slate-50"><p class="text-slate-500">PK Target</p><p class="font-extrabold text-slate-900">${s.target_pk_min}–${s.target_pk_max}%</p></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50"><p class="text-slate-500">EM Min</p><p class="font-extrabold text-slate-900">${s.target_em_min > 0 ? s.target_em_min + ' kkal' : '-'}</p></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50"><p class="text-slate-500">TDN Min</p><p class="font-extrabold text-slate-900">${s.target_tdn_min > 0 ? s.target_tdn_min + '%' : '-'}</p></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50"><p class="text-slate-500">SK Maks</p><p class="font-extrabold text-slate-900">${s.target_sk_max > 0 ? s.target_sk_max + '%' : '-'}</p></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50"><p class="text-slate-500">Ca Min</p><p class="font-extrabold text-slate-900">${s.target_ca_min > 0 ? s.target_ca_min + '%' : '-'}</p></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50"><p class="text-slate-500">P Min</p><p class="font-extrabold text-slate-900">${s.target_p_min > 0 ? s.target_p_min + '%' : '-'}</p></div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="window.useStandardInCalc('${s.id}')" class="text-xs font-bold text-brand-600 hover:text-brand-800">Gunakan di Kalkulator &rarr;</button>
+                    ${isAdmin ? `
+                      <div class="space-x-1">
+                        <button type="button" onclick="window.openStandardForm('${s.id}')" class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">Edit</button>
+                        <button type="button" onclick="window.deleteStandard('${s.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold">Hapus</button>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    window.setStandardGroup = function(group) {
+      state.standardGroup = group;
+      renderActivePage();
+    };
+
+    window.useStandardInCalc = function(stdId) {
+      state.calc.standard_id = stdId;
+      window.navigateTo('calculator');
+    };
+
+    window.openStandardForm = function(editId = null) {
+      const existing = editId ? state.livestock_standards.find((s) => s.id === editId) : null;
+      const body = `
+        <form id="standard-crud-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Ternak *</label>
+              <input name="jenis_ternak" required value="${escapeHtml(existing?.jenis_ternak || '')}" placeholder="Contoh: Ayam Layer / Kambing" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kelompok *</label>
+              <select name="kelompok" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+                ${LIVESTOCK_GROUPS.filter((g) => g !== 'Semua').map((g) => `<option value="${g}" ${existing?.kelompok === g ? 'selected' : ''}>${g}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Fase Pemeliharaan *</label>
+              <input name="fase" required value="${escapeHtml(existing?.fase || '')}" placeholder="Contoh: Starter / Laktasi" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">PK Min (%)</label><input name="target_pk_min" type="number" step="0.1" value="${existing?.target_pk_min ?? 16}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">PK Maks (%)</label><input name="target_pk_max" type="number" step="0.1" value="${existing?.target_pk_max ?? 20}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">EM Min (kkal)</label><input name="target_em_min" type="number" step="10" value="${existing?.target_em_min ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">TDN Min (%)</label><input name="target_tdn_min" type="number" step="0.1" value="${existing?.target_tdn_min ?? 0}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">SK Maks (%)</label><input name="target_sk_max" type="number" step="0.1" value="${existing?.target_sk_max ?? 6}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">Ca Min (%)</label><input name="target_ca_min" type="number" step="0.01" value="${existing?.target_ca_min ?? 0.8}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+            <div><label class="block text-[11px] font-bold text-slate-600 mb-1">P Min (%)</label><input name="target_p_min" type="number" step="0.01" value="${existing?.target_p_min ?? 0.4}" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm"></div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="window.closeCrudModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">Batal</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold">${editId ? 'Simpan Perubahan' : 'Simpan Standar'}</button>
+          </div>
+        </form>
+      `;
+
+      openCrudModal(editId ? 'Edit Standar Nutrisi Ternak' : 'Tambah Standar Nutrisi Ternak', body);
+
+      document.getElementById('standard-crud-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const payload = {
+          jenis_ternak: fd.get('jenis_ternak').trim(),
+          kelompok: fd.get('kelompok'),
+          fase: fd.get('fase').trim(),
+          target_pk_min: Number(fd.get('target_pk_min')) || 0,
+          target_pk_max: Number(fd.get('target_pk_max')) || 0,
+          target_em_min: Number(fd.get('target_em_min')) || 0,
+          target_tdn_min: Number(fd.get('target_tdn_min')) || 0,
+          target_sk_max: Number(fd.get('target_sk_max')) || 0,
+          target_ca_min: Number(fd.get('target_ca_min')) || 0,
+          target_p_min: Number(fd.get('target_p_min')) || 0,
+          updated_at: todayStr()
+        };
+
+        try {
+          if (IS_PREVIEW) {
+            if (editId) {
+              const idx = state.livestock_standards.findIndex((s) => s.id === editId);
+              if (idx >= 0) state.livestock_standards[idx] = { id: editId, ...payload };
+            } else {
+              state.livestock_standards.unshift({ id: 'std-' + Date.now(), ...payload });
+            }
+            window.closeCrudModal();
+            renderActivePage();
+            showToast('Standar nutrisi berhasil disimpan.', 'success');
+          } else {
+            if (editId) {
+              await updateDoc(doc(db, 'livestock_standards', editId), payload);
+            } else {
+              await addDoc(collection(db, 'livestock_standards'), payload);
+            }
+            window.closeCrudModal();
+            showToast('Standar nutrisi berhasil disimpan ke Firestore.', 'success');
+          }
+        } catch (err) {
+          showToast('Gagal menyimpan standar: ' + err.message, 'error');
+        }
+      };
+    };
+
+    window.deleteStandard = async function(id) {
+      const ok = await customConfirm('Hapus Standar Ternak', 'Apakah Anda yakin ingin menghapus standar kebutuhan nutrisi ini?');
+      if (!ok) return;
+      try {
+        if (IS_PREVIEW) {
+          state.livestock_standards = state.livestock_standards.filter((s) => s.id !== id);
+          renderActivePage();
+        } else {
+          await deleteDoc(doc(db, 'livestock_standards', id));
+        }
+        showToast('Standar ternak dihapus.', 'info');
+      } catch (err) {
+        showToast('Gagal menghapus standar: ' + err.message, 'error');
+      }
+    };
+
+    // ==================== 5. RIWAYAT FORMULASI ====================
+    function renderHistory(container) {
+      const list = state.currentUser.role === 'admin'
+        ? state.formulations
+        : state.formulations.filter((f) => f.owner_id === state.currentUser.uid);
+
+      container.innerHTML = `
+        <div class="space-y-5">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900">Riwayat Formulasi Ransum</h2>
+            <p class="text-sm text-slate-500">Daftar resep pakan yang telah tersimpan. Muat ulang ke kalkulator atau cetak lembar kerja.</p>
+          </div>
+
+          ${list.length === 0 ? `
+            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-sm text-slate-500">
+              Belum ada riwayat formulasi tersimpan. Mulai buat ransum di menu <b>Kalkulator Pakan</b>.
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 gap-4">
+              ${list.map((f) => `
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div>
+                      <h3 class="text-base font-extrabold text-slate-900">${escapeHtml(f.nama_formulasi)}</h3>
+                      <p class="text-xs text-slate-500">${escapeHtml(f.jenis_ternak_label)} • Batch: <b>${f.total_berat_kg} kg</b> • Tanggal: ${escapeHtml(f.created_at || '-')}</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-extrabold">${fmtRp(f.biaya_per_kg)}/kg</span>
+                      <span class="px-3 py-1 rounded-xl bg-brand-50 text-brand-800 text-xs font-extrabold">Total: ${fmtRp(f.total_biaya)}</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3 text-xs">
+                    <div class="p-2 rounded-lg bg-slate-50">PK: <b>${fmtNum(f.hasil_nutrisi?.pk, 2)}%</b></div>
+                    <div class="p-2 rounded-lg bg-slate-50">EM: <b>${Math.round(f.hasil_nutrisi?.em || 0)} kkal</b></div>
+                    <div class="p-2 rounded-lg bg-slate-50">TDN: <b>${fmtNum(f.hasil_nutrisi?.tdn, 1)}%</b></div>
+                    <div class="p-2 rounded-lg bg-slate-50">SK: <b>${fmtNum(f.hasil_nutrisi?.sk, 2)}%</b></div>
+                  </div>
+
+                  <div class="text-xs text-slate-600 mb-4">
+                    <span class="font-bold text-slate-700">Komposisi:</span>
+                    ${(f.komposisi || []).map((k) => `${escapeHtml(k.nama_bahan)} (${k.persentase}%)`).join(', ')}
+                  </div>
+
+                  <div class="flex flex-wrap justify-end gap-2">
+                    <button type="button" onclick="window.loadFormulationToCalc('${f.id}')" class="px-3.5 py-1.5 rounded-xl bg-brand-50 text-brand-700 hover:bg-brand-100 text-xs font-bold">Muat ke Kalkulator</button>
+                    <button type="button" onclick="window.printHistoryItem('${f.id}')" class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold">Cetak Ringkasan</button>
+                    <button type="button" onclick="window.deleteFormulation('${f.id}')" class="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold">Hapus</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    window.loadFormulationToCalc = function(id) {
+      const f = state.formulations.find((item) => item.id === id);
+      if (!f) return;
+      state.calc = {
+        nama_formulasi: f.nama_formulasi,
+        standard_id: f.standard_id || state.livestock_standards[0]?.id || '',
+        total_berat_kg: f.total_berat_kg || 100,
+        items: (f.komposisi || []).map((k) => ({
+          ingredient_id: k.ingredient_id,
+          persentase: Number(k.persentase) || 0
+        }))
+      };
+      window.navigateTo('calculator');
+      showToast('Resep berhasil dimuat ke Kalkulator.', 'info');
+    };
+
+    window.printHistoryItem = function(id) {
+      const f = state.formulations.find((item) => item.id === id);
+      if (f) window.openPrintFormulation(f);
+    };
+
+    window.deleteFormulation = async function(id) {
+      const ok = await customConfirm('Hapus Riwayat Formulasi', 'Resep formulasi ini akan dihapus permanen. Lanjutkan?');
+      if (!ok) return;
+      try {
+        if (IS_PREVIEW) {
+          state.formulations = state.formulations.filter((f) => f.id !== id);
+          renderActivePage();
+        } else {
+          await deleteDoc(doc(db, 'formulations', id));
+        }
+        showToast('Formulasi berhasil dihapus.', 'info');
+      } catch (err) {
+        showToast('Gagal menghapus formulasi: ' + err.message, 'error');
+      }
+    };
+
+    // ==================== 6. MANAJEMEN PENGGUNA (KHUSUS ADMIN) ====================
+    function renderUsers(container) {
+      if (state.currentUser.role !== 'admin') {
+        container.innerHTML = '<div class="p-8 bg-white rounded-2xl border text-center text-sm text-rose-600 font-bold">Akses ditolak. Menu ini khusus Administrator.</div>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-900">Manajemen Pengguna (Peternak)</h2>
+              <p class="text-sm text-slate-500">Kelola akun User yang tersimpan di koleksi Firestore untuk akses login Hybrid.</p>
+            </div>
+            <button type="button" onclick="window.openUserForm()" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold shadow-sm transition">+ Tambah Akun User</button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            ${state.users.length === 0 ? `
+              <div class="p-12 text-center text-sm text-slate-500">Belum ada akun User terdaftar. Klik <b>+ Tambah Akun User</b> untuk membuat akses peternak.</div>
+            ` : `
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                      <th class="px-5 py-3 font-bold">Nama &amp; Peternakan</th>
+                      <th class="px-4 py-3 font-bold">Username</th>
+                      <th class="px-4 py-3 font-bold">Status</th>
+                      <th class="px-4 py-3 font-bold">Dibuat</th>
+                      <th class="px-5 py-3 font-bold text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-sm">
+                    ${state.users.map((u) => `
+                      <tr class="hover:bg-slate-50/70">
+                        <td class="px-5 py-3">
+                          <p class="font-bold text-slate-900">${escapeHtml(u.nama_lengkap)}</p>
+                          <p class="text-xs text-slate-500">${escapeHtml(u.nama_peternakan || '-')}</p>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs font-bold text-brand-700">${escapeHtml(u.username)}</td>
+                        <td class="px-4 py-3">
+                          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${u.status === 'aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                            ${u.status === 'aktif' ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </td>
+                        <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(u.created_at || '-')}</td>
+                        <td class="px-5 py-3 text-right whitespace-nowrap space-x-1">
+                          <button type="button" onclick="window.openUserForm('${u.id}')" class="px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">Edit</button>
+                          <button type="button" onclick="window.deleteUser('${u.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold">Hapus</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    window.openUserForm = function(editId = null) {
+      const existing = editId ? state.users.find((u) => u.id === editId) : null;
+      const body = `
+        <form id="user-crud-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap *</label>
+              <input name="nama_lengkap" required value="${escapeHtml(existing?.nama_lengkap || '')}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Peternakan / Instansi</label>
+              <input name="nama_peternakan" value="${escapeHtml(existing?.nama_peternakan || '')}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Username Login *</label>
+              <input name="username" required value="${escapeHtml(existing?.username || '')}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+              <input name="password" type="text" required value="${escapeHtml(existing?.password || '')}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Status Akun</label>
+              <select name="status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+                <option value="aktif" ${existing?.status !== 'nonaktif' ? 'selected' : ''}>Aktif</option>
+                <option value="nonaktif" ${existing?.status === 'nonaktif' ? 'selected' : ''}>Nonaktif</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="window.closeCrudModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">Batal</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold">${editId ? 'Simpan Perubahan' : 'Buat Akun'}</button>
+          </div>
+        </form>
+      `;
+
+      openCrudModal(editId ? 'Edit Akun User' : 'Tambah Akun User Baru', body);
+
+      document.getElementById('user-crud-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const username = fd.get('username').trim();
+
+        const duplicate = state.users.find((u) => u.username === username && u.id !== editId);
+        if (duplicate) return showToast('Username sudah digunakan oleh pengguna lain.', 'warning');
+
+        const payload = {
+          nama_lengkap: fd.get('nama_lengkap').trim(),
+          nama_peternakan: fd.get('nama_peternakan').trim(),
+          username,
+          password: fd.get('password'),
+          status: fd.get('status'),
+          created_at: existing?.created_at || todayStr()
+        };
+
+        try {
+          if (IS_PREVIEW) {
+            if (editId) {
+              const idx = state.users.findIndex((u) => u.id === editId);
+              if (idx >= 0) state.users[idx] = { id: editId, ...payload };
+            } else {
+              state.users.unshift({ id: 'usr-' + Date.now(), ...payload });
+            }
+            window.closeCrudModal();
+            renderActivePage();
+            showToast('Akun pengguna berhasil disimpan.', 'success');
+          } else {
+            if (editId) {
+              await updateDoc(doc(db, 'users', editId), payload);
+            } else {
+              await addDoc(collection(db, 'users'), payload);
+            }
+            window.closeCrudModal();
+            showToast('Akun pengguna tersimpan di Firestore.', 'success');
+          }
+        } catch (err) {
+          showToast('Gagal menyimpan akun: ' + err.message, 'error');
+        }
+      };
+    };
+
+    window.deleteUser = async function(id) {
+      const ok = await customConfirm('Hapus Akun User', 'Pengguna ini tidak akan bisa login lagi. Lanjutkan?');
+      if (!ok) return;
+      try {
+        if (IS_PREVIEW) {
+          state.users = state.users.filter((u) => u.id !== id);
+          renderActivePage();
+        } else {
+          await deleteDoc(doc(db, 'users', id));
+        }
+        showToast('Akun pengguna berhasil dihapus.', 'info');
+      } catch (err) {
+        showToast('Gagal menghapus pengguna: ' + err.message, 'error');
+      }
+    };
+
+    // ==================== REUSABLE MODAL HELPERS ====================
+    function openCrudModal(title, htmlBody) {
+      document.getElementById('crud-modal-title').textContent = title;
+      document.getElementById('crud-modal-body').innerHTML = htmlBody;
+      document.getElementById('crud-modal').classList.remove('hidden');
+    }
+
+    window.closeCrudModal = function() {
+      document.getElementById('crud-modal').classList.add('hidden');
+      document.getElementById('crud-modal-body').innerHTML = '';
+    };
+
+    // ==================== BOOTSTRAP APLIKASI ====================
+    function bootApp() {
+      registerDynamicServiceWorker();
+      setupHeroInteractions();
+
+      if (IS_PREVIEW) {
+        document.getElementById('prelogin-preview-badge').classList.remove('hidden');
+        document.getElementById('prelogin-preview-badge').classList.add('inline-flex');
+        loadPreviewDummyData();
+      } else {
+        document.getElementById('prelogin-preview-badge').classList.add('hidden');
+        initFirebaseProduction();
+      }
+    }
+
+    bootApp();
+  </script>
+</body>
+</html>
